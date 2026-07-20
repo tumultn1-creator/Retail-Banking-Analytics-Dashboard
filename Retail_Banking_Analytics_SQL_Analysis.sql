@@ -1,0 +1,188 @@
+USE RetailBankingAnalytics
+Go
+SELECT
+    COUNT(*) AS Total_Customers,
+    AVG(CAST(Age AS DECIMAL(10,2))) AS Average_Age,
+    AVG(CAST(Income AS DECIMAL(18,2))) AS Average_Income,
+    MIN(Income) AS Lowest_Income,
+    MAX(Income) AS Highest_Income
+FROM Customers;
+
+SELECT
+    State,
+    AVG(CAST(Income AS DECIMAL(18,2))) AS Average_Income
+FROM Customers
+GROUP BY State
+ORDER BY Average_Income DESC;
+
+Select
+    Account_Type,
+    Count(*) As Number_of_Accounts
+From Accounts
+Group By Account_Type
+Order By Number_of_Accounts Desc;
+
+SELECT
+    Account_Type,
+    COUNT(*) AS Accounts,
+    SUM(CAST(Balance AS DECIMAL(18,2))) AS Total_Balance,
+    AVG(CAST(Balance AS DECIMAL(18,2))) AS Average_Balance
+FROM Accounts
+GROUP BY Account_Type
+ORDER BY Total_Balance DESC;
+
+SELECT TOP 10
+    c.Customer_ID,
+    c.First_Name,
+    c.Last_Name,
+    c.State,
+    SUM(a.Balance) AS Total_Balance
+FROM Customers c
+JOIN Accounts a
+    ON c.Customer_ID = a.Customer_ID
+GROUP BY
+    c.Customer_ID,
+    c.First_Name,
+    c.Last_Name,
+    c.State
+ORDER BY Total_Balance DESC;
+
+--Transaction Analysis
+SELECT
+    COUNT(*) AS Total_Transactions,
+    SUM(CAST(Amount AS DECIMAL(18,2))) AS Total_Transaction_Amount,
+    AVG(CAST(Amount AS DECIMAL(18,2))) AS Average_Transaction_Amount,
+    MIN(Amount) AS Smallest_Transaction,
+    MAX(Amount) AS Largest_Transaction
+FROM Transactions;
+
+SELECT
+    Transaction_Type,
+    COUNT(*) AS Transaction_Count,
+    SUM(CAST(Amount AS DECIMAL(18,2))) AS Total_Amount
+FROM Transactions
+GROUP BY Transaction_Type
+ORDER BY Total_Amount DESC;
+
+SELECT
+    Category,
+    COUNT(*) AS Number_of_Transactions,
+    SUM(CAST(Amount AS DECIMAL(18,2))) AS Total_Spending
+FROM Transactions
+GROUP BY Category
+ORDER BY Total_Spending DESC;
+
+SELECT
+    YEAR(Transaction_Date) AS Transaction_Year,
+    MONTH(Transaction_Date) AS Transaction_Month,
+    COUNT(*) AS Transaction_Count,
+    SUM(CAST(Amount AS DECIMAL(18,2))) AS Total_Amount
+FROM Transactions
+GROUP BY
+    YEAR(Transaction_Date),
+    MONTH(Transaction_Date)
+ORDER BY
+    Transaction_Year,
+    Transaction_Month;
+
+--Loan and Credit Risk Analytics
+
+SELECT
+    COUNT(*) AS Total_Loans,
+    SUM(CAST(Loan_Amount AS DECIMAL(18,2))) AS Total_Loan_Value,
+    AVG(CAST(Loan_Amount AS DECIMAL(18,2))) AS Average_Loan_Size,
+    AVG(CAST(Interest_Rate AS DECIMAL(10,2))) AS Average_Interest_Rate
+FROM Loans;
+
+SELECT
+    Loan_Type,
+    COUNT(*) AS Number_of_Loans,
+    SUM(CAST(Loan_Amount AS DECIMAL(18,2))) AS Total_Loan_Value
+FROM Loans
+GROUP BY Loan_Type
+ORDER BY Total_Loan_Value DESC;
+
+SELECT
+    Loan_Status,
+    COUNT(*) AS Loan_Count,
+    SUM(CAST(Loan_Amount AS DECIMAL(18,2))) AS Loan_Value
+FROM Loans
+GROUP BY Loan_Status
+ORDER BY Loan_Count DESC;
+
+SELECT
+    COUNT(*) AS Total_Loans,
+    SUM(Default_Flag) AS Total_Defaults,
+    CAST(SUM(Default_Flag) * 100.0 / COUNT(*) AS DECIMAL(5,2)) AS Default_Rate_Percentage
+FROM Loans;
+
+--Credit Score Analysis
+SELECT
+    AVG(CAST(Credit_Score AS DECIMAL(10,2))) AS Average_Credit_Score,
+    MIN(Credit_Score) AS Lowest_Credit_Score,
+    MAX(Credit_Score) AS Highest_Credit_Score,
+    COUNT(*) AS Total_Credit_Records
+FROM Credit_Scores;
+
+SELECT
+    Credit_Rating,
+    COUNT(*) AS Customer_Count,
+    AVG(CAST(Credit_Score AS DECIMAL(10,2))) AS Average_Score
+FROM Credit_Scores
+GROUP BY Credit_Rating
+ORDER BY Average_Score DESC;
+
+SELECT
+    Risk_Category,
+    COUNT(*) AS Customer_Count,
+    AVG(CAST(Credit_Score AS DECIMAL(10,2))) AS Average_Credit_Score
+FROM Credit_Scores
+GROUP BY Risk_Category
+ORDER BY Average_Credit_Score DESC;
+
+SELECT
+    cs.Credit_Rating,
+    COUNT(l.Loan_ID) AS Total_Loans,
+    SUM(l.Default_Flag) AS Defaults,
+    CAST(
+        SUM(l.Default_Flag) * 100.0 / COUNT(l.Loan_ID)
+        AS DECIMAL(5,2)
+    ) AS Default_Rate
+FROM Credit_Scores cs
+JOIN Loans l
+    ON cs.Customer_ID = l.Customer_ID
+GROUP BY cs.Credit_Rating
+ORDER BY Default_Rate DESC;
+
+--Create Customer Overview View for PowerBi
+
+CREATE VIEW vw_Customer_Overview AS
+
+SELECT
+    c.Customer_ID,
+    c.First_Name,
+    c.Last_Name,
+    c.State,
+    c.Income,
+    c.Employment_Status,
+
+    COUNT(a.Account_ID) AS Total_Accounts,
+
+    SUM(CAST(a.Balance AS DECIMAL(18,2))) AS Total_Balance
+
+FROM Customers c
+
+LEFT JOIN Accounts a
+    ON c.Customer_ID = a.Customer_ID
+
+GROUP BY
+    c.Customer_ID,
+    c.First_Name,
+    c.Last_Name,
+    c.State,
+    c.Income,
+    c.Employment_Status;
+GO
+
+SELECT TOP 10 *
+FROM vw_Customer_Overview;
